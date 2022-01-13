@@ -18,10 +18,11 @@ library(glue)
 library(janitor)
 library(lubridate)
 library(googlesheets4)
+library(openxlsx)
 
 # GLOBAL VARIABLES --------------------------------------------------------
 
-load_secrets() #glamr function to load credentials
+load_secrets() #glamr function to load credentials for google drive
 
 # IMPORT ------------------------------------------------------------------
 
@@ -37,33 +38,42 @@ df_target <- df %>%
          standardizeddisaggregate == "Total Numerator") %>% 
   group_by(mech_code, primepartner, fundingagency, indicator, fiscal_year) %>% 
   summarise(across(c(targets), sum, na.rm = TRUE)) %>% 
+  ungroup() %>% 
   pivot_wider(names_from = fiscal_year, values_from = targets) %>% 
   rename(COP21_target = `2021`,
          COP22_target = `2022`) %>% 
-  arrange(mech_code)
+  arrange(desc(fundingagency)) # remove/keep indicators with NA's/zeroes for FY21/FY22?
+
 
 #Check Pano Data Table - Data Validation Step
-test <- df_target %>% 
-  filter(indicator == "CXCA_SCRN",
-         mech_code == 10227)
 
-sum(test$COP21_target, na.rm = TRUE)
+    # test <- df_target %>% 
+    #   filter(indicator == "CXCA_SCRN",
+    #          mech_code == 10227)
+    # 
+    # sum(test$COP21_target, na.rm = TRUE)
 
 # TABLE ------------------------------------------------------------------
 
-# test <- df %>% 
-#   filter(fiscal_year %in% c(2021, 2022)) %>% 
-#          #fundingagency %in% c("HHS/CDC", "USAID"),
-#         # standardizeddisaggregate == "Total Numerator") %>% 
-#   group_by(mech_code, primepartner, fundingagency, indicator, fiscal_year) %>% 
-#   summarise(across(c(targets), sum, na.rm = TRUE)) %>% 
-#   pivot_wider(names_from = fiscal_year, values_from = targets) %>% 
-#   rename(COP21_target = `2021`,
-#          COP22_target = `2022`) %>% 
-#   filter(indicator == "CXCA_SCRN")
+#USING OPEN_XLSX()
 
-#Question for Tim - is it Total Numerator or totals with no disagg?
+#create the excel workbook
+wb <- createWorkbook()
 
+#add the blank sheet
+addWorksheet(wb, "Sheet 1")
 
+#define style for headers
+hs <- createStyle(fontColour = "#ffffff", fgFill = "#4F80BD",
+                  halign = "center", valign = "center", textDecoration = "Bold",
+                  border = "TopBottomLeftRight")
 
-  
+#write data to the sheet and add style
+writeData(wb, 1, df_target, borders = "rows", headerStyle = hs)
+
+#adding filters to the columns mech_code, prime_partner, funding_agency, and indicator
+addFilter(wb, 1, row = 1, cols = 1:4)
+
+#save workbook and write to dataout folder
+saveWorkbook(wb, file = "Dataout/zambia-targets-fy21-fy22.xlsx", overwrite = TRUE)
+
