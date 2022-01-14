@@ -27,7 +27,7 @@ load_secrets() #glamr function to load credentials for google drive
 # IMPORT ------------------------------------------------------------------
 
 df <-  si_path() %>% # routes R to my data folder (use glamr::set_paths() to set up)
-  return_latest(pattern = "Site_IM_FY19-22.*\\Zambia.zip") %>% # returns the latest file in directory based on the pattern
+  return_latest(pattern = "PSNU_IM_FY19-22.*\\Zambia.zip") %>% # returns the latest file in directory based on the pattern
   read_msd() #reads the MSD
         
 # MUNGE -------------------------------------------------------------------
