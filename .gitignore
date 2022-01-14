@@ -42,6 +42,7 @@ vignettes/*.pdf
 .Rhistory
 .RData
 .Ruserdata
+
 #no data
 *.csv
 *.txt
